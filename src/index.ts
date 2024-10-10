@@ -1,23 +1,35 @@
 import { MikroORM } from '@mikro-orm/core';
 import { __prod__ } from './constants';
-import { Post } from './entities/Post';
 import mikroOrmConfig from './mikro-orm.config';
+import express from 'express';
+import { ApolloServer } from '@apollo/server';
+import { buildSchema } from 'type-graphql';
+import { HelloResolver } from './resolvers/hello';
+import { expressMiddleware } from '@apollo/server/express4';
 
 const main = async () => {
   const orm = await MikroORM.init(mikroOrmConfig);
 
   await orm.getMigrator().up();
 
-  const em = orm.em.fork();
-  //   const post = em.create(Post, {
-  //     createdAt: new Date(),
-  //     updatedAt: new Date(),
-  //     title: 'my first post',
-  //   });
-  //   await em.persistAndFlush(post);
+  const app = express();
 
-  const posts = await em.find(Post, {});
-  console.log(posts);
+  const apolloServer = new ApolloServer({
+    schema: await buildSchema({
+      resolvers: [HelloResolver],
+      validate: false,
+    }),
+  });
+
+  await apolloServer.start();
+
+  app.listen(4000, () => {
+    console.log(`🚀 Server ready at http://localhost:4000/graphql`);
+  });
+
+  app.use('/graphql', express.json(), expressMiddleware(apolloServer));
 };
 
-main().catch((err) => console.error(err));
+main().catch((err) => {
+  console.error(err);
+});
