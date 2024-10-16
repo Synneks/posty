@@ -1,11 +1,11 @@
-node_modules
-dist
+dist/
 
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
-/.pnp
+node_modules
+.next
+pnp
 .pnp.js
 .yarn/install-state.gz
 
@@ -13,11 +13,11 @@ dist
 /coverage
 
 # next.js
-/.next/
-/out/
+next/
+out/
 
 # production
-/build
+build
 
 # misc
 .DS_Store
