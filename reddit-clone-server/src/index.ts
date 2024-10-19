@@ -13,6 +13,7 @@ import RedisStore from 'connect-redis';
 import session from 'express-session';
 import { createClient } from 'redis';
 import { MyContext } from './types';
+import cors from 'cors';
 
 const main = async () => {
   const orm = await MikroORM.init(mikroOrmConfig);
@@ -41,6 +42,8 @@ const main = async () => {
     console.log(`🚀 Server ready at http://localhost:4000/graphql`);
   });
 
+  app.use(cors({ origin: 'http://localhost:3000', credentials: true })); // set middleware to allow requests from the frontend on all routes
+
   // Initialize session storage.
   app.use(
     session({
@@ -61,6 +64,7 @@ const main = async () => {
   app.use(
     '/graphql',
     express.json(),
+    // cors<cors.CorsRequest>({ origin: 'http://localhost:3000' }), this would set allow requests only on this endpoint
     expressMiddleware(apolloServer, {
       context: async ({ req, res }): Promise<MyContext> => ({
         em: orm.em.fork(),
