@@ -10,26 +10,32 @@ import { Field, Form, Formik } from 'formik';
 import React from 'react';
 import Wrapper from '../components/Wrapper';
 import InputField from '../components/InputField';
+import { useMutation } from 'urql';
 
 interface registerProps {}
 
-const Register: React.FC<registerProps> = () => {
-  function validateName(value) {
-    let error;
-    if (!value) {
-      error = 'Name is required';
-    } else if (value.toLowerCase() !== 'naruto') {
-      error = "Jeez! You're not a fan 😱";
+const REGISTER_MUTATION = `mutation RegisterMutation($registerOptions: UsernamePasswordInput!) {
+  register(options: $registerOptions) {
+    user {
+      id
+      username
     }
-    return error;
+    errors {
+      field
+      message
+    }
   }
+}`;
 
+const Register: React.FC<registerProps> = () => {
+  const [, register] = useMutation(REGISTER_MUTATION);
   return (
     <Wrapper variant="small">
       <Formik
         initialValues={{ username: '', password: '' }}
         onSubmit={(values, actions) => {
           console.log(values);
+          return register({ registerOptions: values });
         }}
       >
         {({ isSubmitting }) => (
