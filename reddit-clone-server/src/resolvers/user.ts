@@ -51,7 +51,7 @@ export class UserResolver {
         errors: [
           {
             field: 'username',
-            message: 'username length must be greater than 2',
+            message: 'Username must be longer than 2 characters',
           },
         ],
       };
@@ -62,7 +62,7 @@ export class UserResolver {
         errors: [
           {
             field: 'password',
-            message: 'password length must be greater than 2',
+            message: 'Password must be longer than 2 characters',
           },
         ],
       };
@@ -77,6 +77,7 @@ export class UserResolver {
     try {
       await em.persistAndFlush(user);
     } catch (error) {
+      // duplicate username error
       if (error.code === '23505') {
         return {
           errors: [
@@ -89,7 +90,7 @@ export class UserResolver {
       }
       console.log('error: ', error.message);
     }
-  
+
     req.session.userId = user.id.toString();
     return { user };
   }
