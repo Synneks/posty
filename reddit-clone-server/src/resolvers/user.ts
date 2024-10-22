@@ -67,11 +67,13 @@ export class UserResolver {
         ],
       };
     }
+
     const hashedPassword = await argon2.hash(options.password);
     const user = em.create(User, {
       username: options.username,
       password: hashedPassword,
     });
+
     try {
       await em.persistAndFlush(user);
     } catch (error) {
@@ -86,8 +88,9 @@ export class UserResolver {
         };
       }
       console.log('error: ', error.message);
-      req.session.userId = user.id.toString();
     }
+  
+    req.session.userId = user.id.toString();
     return { user };
   }
 
