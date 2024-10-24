@@ -62,6 +62,14 @@ const urqlClient = createClient({
               }
             );
           },
+          logout(_result, _args, cache, _info) {
+            betterUpdateQuery<RegisterMutation, MeQuery>(
+              cache,
+              { query: MeDocument },
+              _result,
+              () => ({ me: null }) // set me to null
+            );
+          },
         },
       },
     }),

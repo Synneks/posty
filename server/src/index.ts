@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { MikroORM } from '@mikro-orm/core';
-import { __prod__ } from './constants';
+import { __prod__, COOKIE_NAME } from './constants';
 import mikroOrmConfig from './mikro-orm.config';
 import express from 'express';
 import { ApolloServer } from '@apollo/server';
@@ -47,7 +47,7 @@ const main = async () => {
   // Initialize session storage.
   app.use(
     session({
-      name: 'qid',
+      name: COOKIE_NAME,
       store: redisStore,
       resave: false, // required: force lightweight session keep alive (touch)
       saveUninitialized: false, // recommended: only save session when data exists
