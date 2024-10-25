@@ -1,11 +1,13 @@
-import { Button, Box } from "@chakra-ui/react";
-import { Form, Formik } from "formik";
-import React from "react";
-import Wrapper from "../components/Wrapper";
-import InputField from "../components/InputField";
-import { toErrorMap } from "../utils/toErrorMap";
-import { useRouter } from "next/router";
-import { useLoginMutation } from "../generated/graphql";
+import { Button, Box } from '@chakra-ui/react';
+import { Form, Formik } from 'formik';
+import React from 'react';
+import Wrapper from '../components/Wrapper';
+import InputField from '../components/InputField';
+import { toErrorMap } from '../utils/toErrorMap';
+import { useRouter } from 'next/router';
+import { useLoginMutation } from '../generated/graphql';
+import { withUrqlClient } from 'next-urql';
+import { createUrqlClient } from '../utils/createUrqlClient';
 
 interface loginProps {}
 
@@ -15,14 +17,14 @@ const Login: React.FC<loginProps> = () => {
   return (
     <Wrapper variant="small">
       <Formik
-        initialValues={{ username: "", password: "" }}
+        initialValues={{ username: '', password: '' }}
         onSubmit={async (values, actions) => {
           const response = await register({ loginOptions: values });
           if (response.data?.login.errors) {
             actions.setErrors(toErrorMap(response.data.login.errors));
           } else if (response.data?.login.user) {
             // worked
-            router.push("/");
+            router.push('/');
           }
         }}
       >
@@ -46,7 +48,7 @@ const Login: React.FC<loginProps> = () => {
             <Button
               type="submit"
               mt={4}
-              color={"teal"}
+              color={'teal'}
               isLoading={isSubmitting}
             >
               Login
@@ -58,4 +60,4 @@ const Login: React.FC<loginProps> = () => {
   );
 };
 
-export default Login;
+export default withUrqlClient(createUrqlClient)(Login);
