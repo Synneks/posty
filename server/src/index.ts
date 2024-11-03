@@ -14,6 +14,7 @@ import session from 'express-session';
 import { createClient } from 'redis';
 import { MyContext } from './types';
 import cors from 'cors';
+import Redis from 'ioredis';
 
 const main = async () => {
   const orm = await MikroORM.init(mikroOrmConfig);
@@ -22,6 +23,7 @@ const main = async () => {
 
   const app = express();
 
+  // Set up Apollo Server.
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
       resolvers: [HelloResolver, PostResolver, UserResolver],
@@ -30,7 +32,9 @@ const main = async () => {
   });
   await apolloServer.start();
 
+  // Set up Redis.
   const redisClient = createClient();
+  const redis = new Redis();
   redisClient.connect().catch(console.error);
   const redisStore = new RedisStore({
     client: redisClient,
@@ -42,6 +46,7 @@ const main = async () => {
     console.log(`🚀 Server ready at http://localhost:4000/graphql`);
   });
 
+  // Set up express middleware for CORS.
   app.use(cors({ origin: 'http://localhost:3000', credentials: true })); // set middleware to allow requests from the frontend on all routes
 
   // Initialize session storage.
@@ -61,6 +66,7 @@ const main = async () => {
     })
   );
 
+  // Set up express middleware for Apollo Server.
   app.use(
     '/graphql',
     express.json(),
@@ -68,6 +74,7 @@ const main = async () => {
     expressMiddleware(apolloServer, {
       context: async ({ req, res }): Promise<MyContext> => ({
         em: orm.em.fork(),
+        redis,
         req,
         res,
       }),

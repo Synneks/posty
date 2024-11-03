@@ -1,30 +1,31 @@
-import { Button, Box } from '@chakra-ui/react';
-import { Form, Formik } from 'formik';
-import React from 'react';
-import Wrapper from '../components/Wrapper';
-import InputField from '../components/InputField';
-import { toErrorMap } from '../utils/toErrorMap';
-import { useRouter } from 'next/router';
-import { useLoginMutation } from '../generated/graphql';
-import { withUrqlClient } from 'next-urql';
-import { createUrqlClient } from '../utils/createUrqlClient';
+import { Box, Button, Flex, Link } from "@chakra-ui/react";
+import { Form, Formik } from "formik";
+import { withUrqlClient } from "next-urql";
+import NextLink from "next/link";
+import { useRouter } from "next/router";
+import React from "react";
+import InputField from "../components/InputField";
+import Wrapper from "../components/Wrapper";
+import { useLoginMutation } from "../generated/graphql";
+import { createUrqlClient } from "../utils/createUrqlClient";
+import { toErrorMap } from "../utils/toErrorMap";
 
 interface loginProps {}
 
 const Login: React.FC<loginProps> = () => {
   const router = useRouter();
-  const [, register] = useLoginMutation();
+  const [, login] = useLoginMutation();
   return (
     <Wrapper variant="small">
       <Formik
-        initialValues={{ usernameOrEmail: '', password: '' }}
+        initialValues={{ usernameOrEmail: "", password: "" }}
         onSubmit={async (values, actions) => {
-          const response = await register(values);
+          const response = await login(values);
           if (response.data?.login.errors) {
             actions.setErrors(toErrorMap(response.data.login.errors));
           } else if (response.data?.login.user) {
             // worked
-            router.push('/');
+            router.push("/");
           }
         }}
       >
@@ -45,14 +46,21 @@ const Login: React.FC<loginProps> = () => {
               />
             </Box>
 
-            <Button
-              type="submit"
-              mt={4}
-              color={'teal'}
-              isLoading={isSubmitting}
-            >
-              Login
-            </Button>
+            <Flex justify={"space-between"}>
+              <Button
+                type="submit"
+                mt={4}
+                color={"teal"}
+                isLoading={isSubmitting}
+              >
+                Login
+              </Button>
+              <Box mt={2}>
+                <NextLink href="/forgot-password">
+                  <Link>Forgot password?</Link>
+                </NextLink>
+              </Box>
+            </Flex>
           </Form>
         )}
       </Formik>
