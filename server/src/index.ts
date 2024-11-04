@@ -1,25 +1,33 @@
-import 'reflect-metadata';
-import { MikroORM } from '@mikro-orm/core';
-import { __prod__, COOKIE_NAME } from './constants';
-import mikroOrmConfig from './mikro-orm.config';
-import express from 'express';
 import { ApolloServer } from '@apollo/server';
-import { buildSchema } from 'type-graphql';
-import { HelloResolver } from './resolvers/hello';
 import { expressMiddleware } from '@apollo/server/express4';
+import RedisStore from 'connect-redis';
+import cors from 'cors';
+import express from 'express';
+import session from 'express-session';
+import Redis from 'ioredis';
+import { createClient } from 'redis';
+import 'reflect-metadata';
+import { buildSchema } from 'type-graphql';
+import { createConnection } from 'typeorm';
+import { COOKIE_NAME, __prod__ } from './constants';
+import { Post } from './entities/Post';
+import { User } from './entities/User';
+import { HelloResolver } from './resolvers/hello';
 import { PostResolver } from './resolvers/post';
 import { UserResolver } from './resolvers/user';
-import RedisStore from 'connect-redis';
-import session from 'express-session';
-import { createClient } from 'redis';
 import { MyContext } from './types';
-import cors from 'cors';
-import Redis from 'ioredis';
 
 const main = async () => {
-  const orm = await MikroORM.init(mikroOrmConfig);
-
-  await orm.getMigrator().up();
+  // Set up TypeORM.
+  const conn = await createConnection({
+    type: 'postgres',
+    database: 'redditclone',
+    username: 'postgres',
+    password: 'postgres',
+    logging: true,
+    synchronize: true,
+    entities: [User, Post],
+  });
 
   const app = express();
 
@@ -42,6 +50,7 @@ const main = async () => {
     disableTouch: true, // disable touch to prevent session expiration
   });
 
+  // Start the server.
   app.listen(4000, () => {
     console.log(`🚀 Server ready at http://localhost:4000/graphql`);
   });
@@ -73,7 +82,6 @@ const main = async () => {
     // cors<cors.CorsRequest>({ origin: 'http://localhost:3000' }), this would set allow requests only on this endpoint
     expressMiddleware(apolloServer, {
       context: async ({ req, res }): Promise<MyContext> => ({
-        em: orm.em.fork(),
         redis,
         req,
         res,

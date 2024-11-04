@@ -14,7 +14,7 @@ const Index = () => {
         <h1>Posts</h1>
         {fetching ? (
           <div>Loading...</div>
-        ) : !data ? (
+        ) : !data || data.posts.length === 0 ? (
           <div>No posts found</div>
         ) : (
           <ul>
