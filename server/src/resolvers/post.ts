@@ -1,4 +1,3 @@
-import { isAuth } from 'src/middleware/isAuth';
 import { MyContext } from 'src/types';
 import {
   Arg,
@@ -12,6 +11,7 @@ import {
   UseMiddleware,
 } from 'type-graphql';
 import { Post } from '../entities/Post';
+import { isAuth } from '../middleware/isAuth';
 
 @InputType()
 class PostInput {
