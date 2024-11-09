@@ -1,14 +1,14 @@
-import { Box, Button, Flex, Link } from "@chakra-ui/react";
-import { Form, Formik } from "formik";
-import { withUrqlClient } from "next-urql";
-import NextLink from "next/link";
-import { useRouter } from "next/router";
-import React from "react";
-import InputField from "../components/InputField";
-import Wrapper from "../components/Wrapper";
-import { useLoginMutation } from "../generated/graphql";
-import { createUrqlClient } from "../utils/createUrqlClient";
-import { toErrorMap } from "../utils/toErrorMap";
+import { Box, Button, Flex, Link } from '@chakra-ui/react';
+import { Form, Formik } from 'formik';
+import { withUrqlClient } from 'next-urql';
+import NextLink from 'next/link';
+import { useRouter } from 'next/router';
+import React from 'react';
+import InputField from '../components/InputField';
+import Wrapper from '../components/Wrapper';
+import { useLoginMutation } from '../generated/graphql';
+import { createUrqlClient } from '../utils/createUrqlClient';
+import { toErrorMap } from '../utils/toErrorMap';
 
 interface loginProps {}
 
@@ -18,14 +18,14 @@ const Login: React.FC<loginProps> = () => {
   return (
     <Wrapper variant="small">
       <Formik
-        initialValues={{ usernameOrEmail: "", password: "" }}
+        initialValues={{ usernameOrEmail: '', password: '' }}
         onSubmit={async (values, actions) => {
           const response = await login(values);
           if (response.data?.login.errors) {
             actions.setErrors(toErrorMap(response.data.login.errors));
           } else if (response.data?.login.user) {
             // worked
-            router.push("/");
+            router.push(router.query.next ? router.query.next.toString() : '/');
           }
         }}
       >
@@ -46,11 +46,11 @@ const Login: React.FC<loginProps> = () => {
               />
             </Box>
 
-            <Flex justify={"space-between"}>
+            <Flex justify={'space-between'}>
               <Button
                 type="submit"
                 mt={4}
-                color={"teal"}
+                color={'teal'}
                 isLoading={isSubmitting}
               >
                 Login

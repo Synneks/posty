@@ -1,12 +1,21 @@
 import { cacheExchange } from '@urql/exchange-graphcache';
-import { fetchExchange, SSRExchange } from 'urql';
-import { betterUpdateQuery } from './betterUpdateQuery';
+import Router from 'next/router';
+import { Exchange, fetchExchange, mapExchange } from 'urql';
 import {
   LoginMutation,
-  MeQuery,
   MeDocument,
+  MeQuery,
   RegisterMutation,
 } from '../generated/graphql';
+import { betterUpdateQuery } from './betterUpdateQuery';
+
+export const errorExchange: Exchange = mapExchange({
+  onError(error) {
+    if (error.message.includes('not authenticated')) {
+      Router.replace('/login');
+    }
+  },
+});
 
 export const createUrqlClient = (ssrExchange: any) => ({
   url: 'http://localhost:4000/graphql',
@@ -59,6 +68,7 @@ export const createUrqlClient = (ssrExchange: any) => ({
         },
       },
     }),
+    errorExchange,
     ssrExchange,
     fetchExchange,
   ],

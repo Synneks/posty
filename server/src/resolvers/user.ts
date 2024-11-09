@@ -8,7 +8,6 @@ import {
   Query,
   Resolver,
 } from 'type-graphql';
-import { getConnection } from 'typeorm';
 import { v4 } from 'uuid';
 import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from '../constants';
 import { User } from '../entities/User';
@@ -164,6 +163,14 @@ export class UserResolver {
         };
       }
       console.log('error: ', error.message);
+      return {
+        errors: [
+          {
+            field: 'unknown',
+            message: 'Unknown error occurred. Please try again.',
+          },
+        ],
+      };
     }
   }
 
