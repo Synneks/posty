@@ -1,17 +1,20 @@
-import { MyContext } from 'src/types';
 import {
   Arg,
   Ctx,
   Field,
+  FieldResolver,
   InputType,
   Int,
   Mutation,
   Query,
   Resolver,
+  Root,
   UseMiddleware,
 } from 'type-graphql';
+import { PostgresDataSource } from '../datasource';
 import { Post } from '../entities/Post';
 import { isAuth } from '../middleware/isAuth';
+import { MyContext } from '../types';
 
 @InputType()
 class PostInput {
@@ -21,11 +24,27 @@ class PostInput {
   text: string;
 }
 
-@Resolver()
+@Resolver(Post)
 export class PostResolver {
+  @FieldResolver(() => String)
+  textSnippet(@Root() root: Post) {
+    return root.text.slice(0, 128);
+  }
+
   @Query(() => [Post])
-  posts(): Promise<Post[]> {
-    return Post.find();
+  posts(
+    @Arg('limit', () => Int) limit: number,
+    @Arg('cursor', () => String, { nullable: true }) cursor: string | null
+  ): Promise<Post[]> {
+    const realLimit = Math.min(50, limit);
+    return PostgresDataSource.getRepository(Post)
+      .createQueryBuilder('p')
+      .where('"createdAt" < :cursor', {
+        cursor: cursor ? new Date(parseInt(cursor)) : new Date(),
+      })
+      .orderBy('"createdAt"', 'DESC')
+      .take(realLimit)
+      .getMany();
   }
 
   @Query(() => Post, { nullable: true })

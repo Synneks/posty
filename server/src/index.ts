@@ -1,61 +1,41 @@
-import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
-import RedisStore from 'connect-redis';
 import cors from 'cors';
 import express from 'express';
 import session from 'express-session';
 import Redis from 'ioredis';
-import { createClient } from 'redis';
 import 'reflect-metadata';
-import { buildSchema } from 'type-graphql';
-import { createConnection } from 'typeorm';
+import { createApolloServer } from './apollo-server';
 import { COOKIE_NAME, __prod__ } from './constants';
-import { Post } from './entities/Post';
-import { User } from './entities/User';
-import { HelloResolver } from './resolvers/hello';
-import { PostResolver } from './resolvers/post';
-import { UserResolver } from './resolvers/user';
+import { PostgresDataSource } from './datasource';
+import { createRedisStore } from './redis';
 import { MyContext } from './types';
 
 const main = async () => {
-  // Set up TypeORM.
-  const conn = await createConnection({
-    type: 'postgres',
-    database: 'redditclone',
-    username: 'postgres',
-    password: 'postgres',
-    logging: true,
-    synchronize: true,
-    entities: [User, Post],
-  });
+  await PostgresDataSource.initialize()
+    .then(() =>
+      console.log(
+        'Data Source has been initialized! Running migrations if needed...'
+      )
+    )
+    .catch((err) =>
+      console.error('Error during Data Source initialization', err)
+    );
+
+  await PostgresDataSource.runMigrations().then(() =>
+    console.log('Migrations have been run!')
+  );
 
   const app = express();
-
-  // Set up Apollo Server.
-  const apolloServer = new ApolloServer({
-    schema: await buildSchema({
-      resolvers: [HelloResolver, PostResolver, UserResolver],
-      validate: false,
-    }),
-  });
-  await apolloServer.start();
-
-  // Set up Redis.
-  const redisClient = createClient();
+  const apolloServer = await createApolloServer();
+  const redisStore = await createRedisStore();
   const redis = new Redis();
-  redisClient.connect().catch(console.error);
-  const redisStore = new RedisStore({
-    client: redisClient,
-    prefix: 'myapp:',
-    disableTouch: true, // disable touch to prevent session expiration
-  });
 
   // Start the server.
   app.listen(4000, () => {
     console.log(`🚀 Server ready at http://localhost:4000/graphql`);
   });
 
-  // Set up express middleware for CORS.
+  // Set up express middleware for CORS as PostgresDataSource .
   app.use(cors({ origin: 'http://localhost:3000', credentials: true })); // set middleware to allow requests from the frontend on all routes
 
   // Initialize session storage.
