@@ -1,12 +1,6 @@
 import { cacheExchange, Resolver } from '@urql/exchange-graphcache';
 import Router from 'next/router';
-import {
-  Exchange,
-  fetchExchange,
-  mapExchange,
-  Query,
-  stringifyVariables,
-} from 'urql';
+import { Exchange, fetchExchange, mapExchange, stringifyVariables } from 'urql';
 import {
   LoginMutation,
   MeDocument,
@@ -14,7 +8,6 @@ import {
   RegisterMutation,
 } from '../generated/graphql';
 import { betterUpdateQuery } from './betterUpdateQuery';
-import createPost from '../pages/create-post';
 
 export const errorExchange: Exchange = mapExchange({
   onError(error) {
@@ -74,8 +67,14 @@ export const createUrqlClient = (ssrExchange: any) => ({
       updates: {
         Mutation: {
           createPost(_result, _args, cache, _info) {
-            cache.invalidate('Query', 'posts', {
-              limit: 15,
+            const allFields = cache.inspectFields('Query');
+            const fieldInfos = allFields.filter(
+              (info) => info.fieldName === 'posts'
+            );
+
+            // loop through all the paginated values and invalidate them all
+            fieldInfos.forEach((fieldInfo) => {
+              cache.invalidate('Query', 'posts', fieldInfo.arguments || {});
             });
           },
           login(_result, _args, cache, _info) {
