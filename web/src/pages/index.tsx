@@ -4,10 +4,15 @@ import NextLink from 'next/link';
 import Layout from '../components/Layout';
 import { usePostsQuery } from '../generated/graphql';
 import { createUrqlClient } from '../utils/createUrqlClient';
+import { useState } from 'react';
 
 const Index = () => {
+  const [variables, setVariables] = useState({
+    limit: 33,
+    cursor: null as null | string,
+  });
   const [{ data, fetching }] = usePostsQuery({
-    variables: { limit: 10 },
+    variables,
   });
 
   if (!fetching && !data) {
@@ -28,12 +33,12 @@ const Index = () => {
         </Heading>
         {!data && fetching ? (
           <div>Loading...</div>
-        ) : !data || data.posts.length === 0 ? (
+        ) : !data || data.posts.posts.length === 0 ? (
           <div>No posts found</div>
         ) : (
           <>
             <Stack spacing={4}>
-              {data.posts.map((p) => (
+              {data.posts.posts.map((p) => (
                 <Box
                   key={p.id}
                   p={4}
@@ -46,11 +51,23 @@ const Index = () => {
                 </Box>
               ))}
             </Stack>
-            <Flex>
-              <Button m={'auto'} my={4}>
-                Load More
-              </Button>
-            </Flex>
+            {data.posts.hasMore ? (
+              <Flex>
+                <Button
+                  m={'auto'}
+                  my={4}
+                  onClick={() =>
+                    setVariables({
+                      limit: variables.limit,
+                      cursor:
+                        data.posts.posts[data.posts.posts.length - 1].createdAt,
+                    })
+                  }
+                >
+                  Load More
+                </Button>
+              </Flex>
+            ) : null}
           </>
         )}
       </div>

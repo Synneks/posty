@@ -6,6 +6,7 @@ import {
   InputType,
   Int,
   Mutation,
+  ObjectType,
   Query,
   Resolver,
   Root,
@@ -24,6 +25,15 @@ class PostInput {
   text: string;
 }
 
+@ObjectType()
+class PaginatedPosts {
+  @Field(() => [Post])
+  posts: Post[];
+
+  @Field()
+  hasMore: boolean;
+}
+
 @Resolver(Post)
 export class PostResolver {
   @FieldResolver(() => String)
@@ -31,20 +41,26 @@ export class PostResolver {
     return root.text.slice(0, 128);
   }
 
-  @Query(() => [Post])
-  posts(
+  @Query(() => PaginatedPosts)
+  async posts(
     @Arg('limit', () => Int) limit: number,
     @Arg('cursor', () => String, { nullable: true }) cursor: string | null
-  ): Promise<Post[]> {
-    const realLimit = Math.min(50, limit);
-    return PostgresDataSource.getRepository(Post)
+  ): Promise<PaginatedPosts> {
+    // if there are realLimit + 1 posts means there are more posts to be fetched
+    const realLimit = await Math.min(50, limit);
+    const realLimitPlusOne = realLimit + 1;
+    const posts = await PostgresDataSource.getRepository(Post)
       .createQueryBuilder('p')
       .where('"createdAt" < :cursor', {
         cursor: cursor ? new Date(parseInt(cursor)) : new Date(),
       })
       .orderBy('"createdAt"', 'DESC')
-      .take(realLimit)
+      .take(realLimitPlusOne)
       .getMany();
+    return {
+      posts: posts.slice(0, realLimit),
+      hasMore: posts.length === realLimitPlusOne,
+    };
   }
 
   @Query(() => Post, { nullable: true })
