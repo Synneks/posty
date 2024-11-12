@@ -37,8 +37,8 @@ class PaginatedPosts {
 @Resolver(Post)
 export class PostResolver {
   @FieldResolver(() => String)
-  textSnippet(@Root() root: Post) {
-    return root.text.slice(0, 128);
+  textSnippet(@Root() thisPost: Post) {
+    return thisPost.text.slice(0, 128);
   }
 
   @Query(() => PaginatedPosts)
@@ -49,14 +49,28 @@ export class PostResolver {
     // if there are realLimit + 1 posts means there are more posts to be fetched
     const realLimit = await Math.min(50, limit);
     const realLimitPlusOne = realLimit + 1;
-    const posts = await PostgresDataSource.getRepository(Post)
-      .createQueryBuilder('p')
-      .where('"createdAt" < :cursor', {
-        cursor: cursor ? new Date(parseInt(cursor)) : new Date(),
-      })
-      .orderBy('"createdAt"', 'DESC')
-      .take(realLimitPlusOne)
-      .getMany();
+
+    const posts = await PostgresDataSource.query(
+      `
+        SELECT p.*, 
+        json_build_object(
+          'id', u.id, 
+          'username', u.username, 
+          'email', u.email,
+          'createdAt', u."createdAt",
+          'updatedAt', u."updatedAt"
+        ) "creator"
+
+        FROM post p
+        INNER JOIN "user" u ON u.id = p."creatorId"
+        WHERE p."createdAt" < $1
+        ORDER BY p."createdAt" DESC
+        LIMIT $2
+      `,
+      [cursor ? new Date(parseInt(cursor)) : new Date(), realLimitPlusOne]
+    );
+
+    console.log(posts);
     return {
       posts: posts.slice(0, realLimit),
       hasMore: posts.length === realLimitPlusOne,
