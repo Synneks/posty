@@ -16,6 +16,7 @@ import { PostgresDataSource } from '../datasource';
 import { Post } from '../entities/Post';
 import { isAuth } from '../middleware/isAuth';
 import { MyContext } from '../types';
+import { Updoot } from '../entities/Updoot';
 
 @InputType()
 class PostInput {
@@ -39,6 +40,27 @@ export class PostResolver {
   @FieldResolver(() => String)
   textSnippet(@Root() thisPost: Post) {
     return thisPost.text.slice(0, 128);
+  }
+
+  @Mutation(() => Boolean)
+  @UseMiddleware(isAuth)
+  async vote(
+    @Arg('postId', () => Int) postId: number,
+    @Arg('value', () => Int) value: number,
+    @Ctx() { req }: MyContext
+  ) {
+    const isUpdoot = value !== -1;
+    const _value = isUpdoot ? 1 : -1;
+    const { userId } = req.session;
+    await PostgresDataSource.query(
+      `
+        START TRANSACTION;
+        INSERT INTO updoot ("userId", "postId", value) VALUES (${userId}, ${postId}, ${_value});
+        UPDATE post SET points = points + ${_value} WHERE id = ${postId};
+        COMMIT;
+      `
+    );
+    return true;
   }
 
   @Query(() => PaginatedPosts)
@@ -70,7 +92,6 @@ export class PostResolver {
       [cursor ? new Date(parseInt(cursor)) : new Date(), realLimitPlusOne]
     );
 
-    console.log(posts);
     return {
       posts: posts.slice(0, realLimit),
       hasMore: posts.length === realLimitPlusOne,
