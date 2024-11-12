@@ -14,6 +14,7 @@ import {
   RegisterMutation,
 } from '../generated/graphql';
 import { betterUpdateQuery } from './betterUpdateQuery';
+import createPost from '../pages/create-post';
 
 export const errorExchange: Exchange = mapExchange({
   onError(error) {
@@ -27,7 +28,6 @@ const cursorPagination = (): Resolver => {
   return (_parent, fieldArgs, cache, info) => {
     const { parentKey: entityKey, fieldName } = info;
     const allFields = cache.inspectFields(entityKey);
-    console.log('allFields: ', allFields);
     const fieldInfos = allFields.filter((info) => info.fieldName === fieldName);
     const size = fieldInfos.length;
     if (size === 0) {
@@ -73,6 +73,11 @@ export const createUrqlClient = (ssrExchange: any) => ({
       },
       updates: {
         Mutation: {
+          createPost(_result, _args, cache, _info) {
+            cache.invalidate('Query', 'posts', {
+              limit: 15,
+            });
+          },
           login(_result, _args, cache, _info) {
             betterUpdateQuery<LoginMutation, MeQuery>(
               cache,
