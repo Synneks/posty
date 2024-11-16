@@ -11,19 +11,7 @@ import { createRedisStore } from './redis';
 import { MyContext } from './types';
 
 const main = async () => {
-  await PostgresDataSource.initialize()
-    .then(() =>
-      console.log(
-        'Data Source has been initialized! Running migrations if needed...'
-      )
-    )
-    .catch((err) =>
-      console.error('Error during Data Source initialization', err)
-    );
-
-  await PostgresDataSource.runMigrations().then(() =>
-    console.log('Migrations have been run!')
-  );
+  await initDB();
 
   const app = express();
   const apolloServer = await createApolloServer();
@@ -59,7 +47,8 @@ const main = async () => {
   app.use(
     '/graphql',
     express.json(),
-    // cors<cors.CorsRequest>({ origin: 'http://localhost:3000' }), this would set allow requests only on this endpoint
+    // cors<cors.CorsRequest>({ origin: 'http://localhost:3000' })
+    // would set allow requests only on this endpoint
     expressMiddleware(apolloServer, {
       context: async ({ req, res }): Promise<MyContext> => ({
         redis,
@@ -67,6 +56,22 @@ const main = async () => {
         res,
       }),
     })
+  );
+};
+
+const initDB = async () => {
+  await PostgresDataSource.initialize()
+    .then(() =>
+      console.log(
+        'Data Source has been initialized! Running migrations if needed...'
+      )
+    )
+    .catch((err) =>
+      console.error('Error during Data Source initialization', err)
+    );
+
+  await PostgresDataSource.runMigrations().then(() =>
+    console.log('Migrations have been run!')
   );
 };
 
