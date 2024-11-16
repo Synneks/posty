@@ -1,6 +1,6 @@
 import { Box, Button, Flex, Link } from '@chakra-ui/react';
-import React, { useEffect, useState } from 'react';
 import NextLink from 'next/link'; // enables client-side routing
+import React, { useEffect, useState } from 'react';
 import { useLogoutMutation, useMeQuery } from '../generated/graphql';
 import { isServer } from '../utils/isServer';
 
@@ -9,6 +9,7 @@ interface NavBarProps {}
 export const NavBar: React.FC<NavBarProps> = () => {
   const [{ fetching: logoutFetching }, logout] = useLogoutMutation();
   const [{ data, fetching }] = useMeQuery({
+    // fully optional since I am sending the cookie with the request the navbar can be rendered on the server, but I prefer not to
     pause: isServer(),
   });
   let body = null;

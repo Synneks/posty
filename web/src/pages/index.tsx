@@ -1,10 +1,11 @@
 import { Box, Button, Flex, Heading, Stack, Text } from '@chakra-ui/react';
 import { withUrqlClient } from 'next-urql';
 import NextLink from 'next/link';
+import { useState } from 'react';
 import Layout from '../components/Layout';
+import { VoteSection } from '../components/VoteSection';
 import { usePostsQuery } from '../generated/graphql';
 import { createUrqlClient } from '../utils/createUrqlClient';
-import { useState } from 'react';
 
 const Index = () => {
   const [variables, setVariables] = useState({
@@ -39,17 +40,23 @@ const Index = () => {
           <>
             <Stack spacing={4}>
               {data.posts.posts.map((p) => (
-                <Box
+                <Flex
                   key={p.id}
                   p={4}
                   borderWidth={2}
                   shadow={'md'}
                   borderRadius={'md'}
                 >
-                  <Heading fontSize={'xl'}>{p.title}</Heading>{' '}
-                  <Text fontSize={'sm'}>Posted by {p.creator.username}</Text>
-                  <Text mt={4}>{p.textSnippet}...</Text>
-                </Box>
+                  <VoteSection post={p} />
+                  <Box>
+                    <Heading fontSize={'xl'}>{p.title}</Heading>
+                    <Text fontSize={'sm'}>Posted by {p.creator.username}</Text>
+                    <Text mt={4}>
+                      {p.textSnippet}
+                      {p.textSnippet.length === 128 ? <>...</> : null}
+                    </Text>
+                  </Box>
+                </Flex>
               ))}
             </Stack>
             {data.posts.hasMore ? (

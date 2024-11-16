@@ -49,26 +49,54 @@ export class PostResolver {
     @Arg('value', () => Int) value: number,
     @Ctx() { req }: MyContext
   ) {
+    const { userId } = req.session;
+    const hasVoted = await Updoot.findOne({
+      where: { postId, userId: req.session.userId },
+    });
     const isUpdoot = value !== -1;
     const _value = isUpdoot ? 1 : -1;
-    const { userId } = req.session;
-    await PostgresDataSource.query(
-      `
-        START TRANSACTION;
+    let query = '';
+
+    // the user has voted on the post before and they are changing their vote
+    if (hasVoted && hasVoted.value !== _value) {
+      query = `
+          UPDATE updoot SET value = ${_value} WHERE "postId" = ${postId} AND "userId" = ${userId};
+          UPDATE post SET points = points + ${2 * _value} WHERE id = ${postId};
+          `;
+    } else if (hasVoted && hasVoted.value === _value) {
+      // the user has voted on the post before and they are undoing their vote
+      query = `
+          DELETE FROM updoot WHERE "postId" = ${postId} AND "userId" = ${userId};
+          UPDATE post SET points = points + ${-1 * _value} WHERE id = ${postId};
+          `;
+    } else if (!hasVoted) {
+      // the user has not voted before
+      query = ` 
         INSERT INTO updoot ("userId", "postId", value) VALUES (${userId}, ${postId}, ${_value});
         UPDATE post SET points = points + ${_value} WHERE id = ${postId};
-        COMMIT;
-      `
-    );
+        `;
+    }
+
+    if (!query) {
+      return false;
+    }
+
+    await PostgresDataSource.transaction(async (tm) => {
+      await tm.query(query);
+    });
+
     return true;
   }
 
   @Query(() => PaginatedPosts)
   async posts(
     @Arg('limit', () => Int) limit: number,
-    @Arg('cursor', () => String, { nullable: true }) cursor: string | null
+    @Arg('cursor', () => String, { nullable: true }) cursor: string | null,
+    // TODO: req.session.userId is null even when the user is logged in
+    @Ctx() { req }: MyContext
   ): Promise<PaginatedPosts> {
-    // if there are realLimit + 1 posts means there are more posts to be fetched
+    console.log(req.session);
+    const { userId } = req.session;
     const realLimit = await Math.min(50, limit);
     const realLimitPlusOne = realLimit + 1;
 
@@ -81,15 +109,25 @@ export class PostResolver {
           'email', u.email,
           'createdAt', u."createdAt",
           'updatedAt', u."updatedAt"
-        ) "creator"
-
+        ) "creator",
+        ${
+          userId
+            ? '(select value from updoot where "userId" = $3 and "postId" = p.id) "voteStatus"'
+            : '$3 as "voteStatus"'
+        }
         FROM post p
         INNER JOIN "user" u ON u.id = p."creatorId"
         WHERE p."createdAt" < $1
         ORDER BY p."createdAt" DESC
         LIMIT $2
       `,
-      [cursor ? new Date(parseInt(cursor)) : new Date(), realLimitPlusOne]
+      [
+        req.session.cursor
+          ? new Date(parseInt(req.session.cursor))
+          : new Date(),
+        realLimitPlusOne,
+        req.session.userId,
+      ]
     );
 
     return {
