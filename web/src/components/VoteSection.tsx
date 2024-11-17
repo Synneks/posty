@@ -22,11 +22,12 @@ export const VoteSection: React.FC<VoteSectionProps> = ({ post }) => {
       justifyContent={'center'}
     >
       <IconButton
-        aria-label="updoot"
+        aria-label="Updoot"
         variant={post.voteStatus === 1 ? 'outline' : 'ghost'}
-        colorScheme={post.voteStatus === 1 ? 'teal' : undefined}
-        icon={<ChevronUpIcon />}
+        color={post.voteStatus === 1 ? 'green' : undefined}
+        borderColor={post.voteStatus === 1 ? 'green' : 'transparent'}
         borderBottom={'none'}
+        icon={<ChevronUpIcon />}
         isLoading={loadingState === 'updoot-loading'}
         onClick={async () => {
           setLoadingState('updoot-loading');
@@ -44,11 +45,12 @@ export const VoteSection: React.FC<VoteSectionProps> = ({ post }) => {
         {post.points}
       </Flex>
       <IconButton
-        aria-label="downdoot"
+        aria-label="Downdoot"
         variant={post.voteStatus === -1 ? 'outline' : 'ghost'}
-        colorScheme={post.voteStatus === -1 ? 'red' : undefined}
-        icon={<ChevronDownIcon />}
+        color={post.voteStatus === -1 ? 'red.500' : undefined}
+        borderColor={post.voteStatus === -1 ? 'red.500' : 'transparent'}
         borderTop={'none'}
+        icon={<ChevronDownIcon />}
         isLoading={loadingState === 'downdoot-loading'}
         onClick={async () => {
           setLoadingState('downdoot-loading');
