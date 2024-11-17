@@ -1,7 +1,7 @@
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
-import { Flex, IconButton, Text } from '@chakra-ui/react';
-import { PostSnippetFragment, useVoteMutation } from '../generated/graphql';
+import { Flex, IconButton } from '@chakra-ui/react';
 import { useState } from 'react';
+import { PostSnippetFragment, useVoteMutation } from '../generated/graphql';
 
 interface VoteSectionProps {
   post: PostSnippetFragment;
@@ -20,13 +20,13 @@ export const VoteSection: React.FC<VoteSectionProps> = ({ post }) => {
       alignItems={'center'}
       flexDirection={'column'}
       justifyContent={'center'}
-      mr={4}
     >
       <IconButton
         aria-label="updoot"
-        variant={post.voteStatus === 1 ? 'solid' : 'ghost'}
-        colorScheme={post.voteStatus === 1 ? 'green' : undefined}
+        variant={post.voteStatus === 1 ? 'outline' : 'ghost'}
+        colorScheme={post.voteStatus === 1 ? 'teal' : undefined}
         icon={<ChevronUpIcon />}
+        borderBottom={'none'}
         isLoading={loadingState === 'updoot-loading'}
         onClick={async () => {
           setLoadingState('updoot-loading');
@@ -34,12 +34,21 @@ export const VoteSection: React.FC<VoteSectionProps> = ({ post }) => {
           setLoadingState('not-loading');
         }}
       />
-      <Text fontSize={'xs'}>{post.points}</Text>
+      <Flex
+        fontSize={'xs'}
+        height={'40px'}
+        width={'40px'}
+        justifyContent={'center'}
+        alignItems={'center'}
+      >
+        {post.points}
+      </Flex>
       <IconButton
         aria-label="downdoot"
-        variant={post.voteStatus === -1 ? 'solid' : 'ghost'}
+        variant={post.voteStatus === -1 ? 'outline' : 'ghost'}
         colorScheme={post.voteStatus === -1 ? 'red' : undefined}
         icon={<ChevronDownIcon />}
+        borderTop={'none'}
         isLoading={loadingState === 'downdoot-loading'}
         onClick={async () => {
           setLoadingState('downdoot-loading');

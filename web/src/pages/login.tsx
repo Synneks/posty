@@ -56,9 +56,9 @@ const Login: React.FC<loginProps> = () => {
                 Login
               </Button>
               <Box mt={2}>
-                <NextLink href="/forgot-password">
-                  <Link>Forgot password?</Link>
-                </NextLink>
+                <Link as={NextLink} href="/forgot-password">
+                  Forgot password?
+                </Link>
               </Box>
             </Flex>
           </Form>

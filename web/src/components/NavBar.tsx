@@ -1,8 +1,8 @@
-import { Box, Button, Flex, Link } from '@chakra-ui/react';
-import NextLink from 'next/link'; // enables client-side routing
+import { Box, Button, Flex, Heading, Highlight, Link } from '@chakra-ui/react';
 import React, { useEffect, useState } from 'react';
 import { useLogoutMutation, useMeQuery } from '../generated/graphql';
 import { isServer } from '../utils/isServer';
+import NextLink from 'next/link';
 
 interface NavBarProps {}
 
@@ -28,18 +28,22 @@ export const NavBar: React.FC<NavBarProps> = () => {
   } else if (!data?.me) {
     body = (
       <>
-        <NextLink href={'/login'}>
-          <Link mr={2}>Login</Link>
-        </NextLink>
-        <NextLink href={'/register'}>
-          <Link>Register</Link>
-        </NextLink>
+        <Link as={NextLink} mr={2} href={'/login'}>
+          Login
+        </Link>
+        <Link href={'/register'}>Register</Link>
       </>
     );
     // user is logged in
   } else {
     body = (
-      <Flex>
+      <Flex alignItems={'center'} justifyContent={'space-around'} gap={4}>
+        <Link>
+          <Button as={NextLink} href={'/create-post'}>
+            Create Post{' '}
+          </Button>
+        </Link>
+
         <Box mr={2}> {data.me.username}</Box>
         <Button
           variant={'link'}
@@ -62,8 +66,17 @@ export const NavBar: React.FC<NavBarProps> = () => {
       p={4}
       zIndex={999}
       color="white"
+      alignItems={'center'}
+      justify={'space-around'}
     >
-      <Box ml={'auto'}>{body}</Box>
+      <Link as={NextLink} href="/">
+        <Heading>
+          <Highlight query={'Clone'} styles={{ color: 'background' }}>
+            Reddit Clone
+          </Highlight>
+        </Heading>
+      </Link>
+      <Box>{body}</Box>
     </Flex>
   );
 };

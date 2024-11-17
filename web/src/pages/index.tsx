@@ -1,6 +1,5 @@
 import { Box, Button, Flex, Heading, Stack, Text } from '@chakra-ui/react';
 import { withUrqlClient } from 'next-urql';
-import NextLink from 'next/link';
 import { useState } from 'react';
 import Layout from '../components/Layout';
 import { VoteSection } from '../components/VoteSection';
@@ -22,13 +21,7 @@ const Index = () => {
 
   return (
     <Layout>
-      <Flex justifyContent={'space-between'}>
-        <Heading>Reddit Clone</Heading>
-        <NextLink href="/create-post">
-          <Button bg="#7928CA">Create Post</Button>
-        </NextLink>
-      </Flex>
-      <div>
+      <Box>
         <Heading fontSize={'2xl'} py={2}>
           Most recent posts
         </Heading>
@@ -48,7 +41,7 @@ const Index = () => {
                   borderRadius={'md'}
                 >
                   <VoteSection post={p} />
-                  <Box>
+                  <Box ml={4}>
                     <Heading fontSize={'xl'}>{p.title}</Heading>
                     <Text fontSize={'sm'}>Posted by {p.creator.username}</Text>
                     <Text mt={4}>
@@ -78,7 +71,7 @@ const Index = () => {
             ) : null}
           </>
         )}
-      </div>
+      </Box>
     </Layout>
   );
 };
