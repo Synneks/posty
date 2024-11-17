@@ -8,6 +8,7 @@ import {
   stringifyVariables,
 } from 'urql';
 import {
+  DeletePostMutationVariables,
   LoginMutation,
   MeDocument,
   MeQuery,
@@ -74,6 +75,13 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => ({
       },
       updates: {
         Mutation: {
+          deletePost(_result, _args, cache, _info) {
+            const { id } = _args as DeletePostMutationVariables;
+            cache.invalidate({
+              __typename: 'Post',
+              id: id,
+            });
+          },
           vote: (_result, _args, cache, _info) => {
             const { postId, value } = _args as VoteMutationVariables;
 
