@@ -11,21 +11,28 @@ import { withUrqlClient } from 'next-urql';
 import { useState } from 'react';
 import Layout from '../components/Layout';
 import { VoteSection } from '../components/VoteSection';
-import { useDeletePostMutation, usePostsQuery } from '../generated/graphql';
+import {
+  useDeletePostMutation,
+  useMeQuery,
+  usePostsQuery,
+} from '../generated/graphql';
 import { createUrqlClient } from '../utils/createUrqlClient';
-import { DeleteIcon } from '@chakra-ui/icons';
+import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
+import NextLink from 'next/link';
+
 const Index = () => {
   const [variables, setVariables] = useState({
     limit: 15,
     cursor: null as null | string,
   });
-  const [{ data, fetching }] = usePostsQuery({
+  const [{ data: meData }] = useMeQuery();
+  const [{ data: postsData, fetching }] = usePostsQuery({
     variables,
   });
 
   const [, deletePost] = useDeletePostMutation();
 
-  if (!fetching && !data) {
+  if (!fetching && !postsData) {
     return <div>Error when loading data</div>;
   }
 
@@ -35,14 +42,14 @@ const Index = () => {
         <Heading fontSize={'2xl'} py={2}>
           Most recent posts
         </Heading>
-        {!data && fetching ? (
+        {!postsData && fetching ? (
           <div>Loading...</div>
-        ) : !data || data.posts.posts.length === 0 ? (
+        ) : !postsData || postsData.posts.posts.length === 0 ? (
           <div>No posts found</div>
         ) : (
           <>
             <Stack spacing={4}>
-              {data.posts.posts.map((p) =>
+              {postsData.posts.posts.map((p) =>
                 !p ? null : (
                   // Post Card
                   <Flex
@@ -58,28 +65,37 @@ const Index = () => {
                       <Text fontSize={'sm'}>
                         Posted by {p.creator.username}
                       </Text>
-                      <Text mt={4}>
-                        {p.textSnippet}
-                        {p.textSnippet.length === 128 ? <>...</> : null}
-                      </Text>
-                      <Flex>
-                        <IconButton
-                          aria-label="Delete Post"
-                          variant={'ghost'}
-                          color="red.500"
-                          ml={'auto'}
-                          icon={<DeleteIcon />}
-                          onClick={() => {
-                            deletePost({ id: p.id });
-                          }}
-                        ></IconButton>
+                      <Flex justifyContent={'space-between'}>
+                        <Text mt={4}>
+                          {p.textSnippet}
+                          {p.textSnippet.length === 128 ? <>...</> : null}
+                        </Text>
+                        {meData?.me?.id !== p.creatorId ? null : (
+                          <Flex mt={'auto'} flexWrap={'nowrap'}>
+                            <IconButton
+                              aria-label="Edit Post"
+                              variant={'ghost'}
+                              icon={<EditIcon />}
+                              as={NextLink}
+                              href={`/post/edit/${p.id}`}
+                            ></IconButton>
+                            <IconButton
+                              aria-label="Delete Post"
+                              variant={'ghost'}
+                              icon={<DeleteIcon />}
+                              onClick={() => {
+                                deletePost({ id: p.id });
+                              }}
+                            ></IconButton>
+                          </Flex>
+                        )}
                       </Flex>
                     </Box>
                   </Flex>
                 )
               )}
             </Stack>
-            {data.posts.hasMore ? (
+            {postsData.posts.hasMore ? (
               <Flex>
                 <Button
                   m={'auto'}
@@ -88,7 +104,8 @@ const Index = () => {
                     setVariables({
                       limit: variables.limit,
                       cursor:
-                        data.posts.posts[data.posts.posts.length - 1].createdAt,
+                        postsData.posts.posts[postsData.posts.posts.length - 1]
+                          .createdAt,
                     })
                   }
                 >

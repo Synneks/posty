@@ -92,7 +92,6 @@ export class PostResolver {
   async posts(
     @Arg('limit', () => Int) limit: number,
     @Arg('cursor', () => String, { nullable: true }) cursor: string | null,
-    // TODO: req.session.userId is null even when the user is logged in
     @Ctx() { req }: MyContext
   ): Promise<PaginatedPosts> {
     console.log(req.session);
@@ -151,19 +150,28 @@ export class PostResolver {
   }
 
   @Mutation(() => Post, { nullable: true })
+  @UseMiddleware(isAuth)
   async updatePost(
     @Arg('id', () => Int) id: number,
-    @Arg('title', () => String, { nullable: true }) title: string
+    @Arg('title') title: string,
+    @Arg('text') text: string,
+    @Ctx() { req }: MyContext
   ): Promise<Post | null> {
-    const post = await Post.findOne({ where: { id } });
-    if (!post) {
-      return null;
+    if (typeof title !== 'undefined' && typeof text !== 'undefined') {
+      return await PostgresDataSource.createQueryBuilder()
+        .update(Post)
+        .set({ title, text })
+        .where('id = :id and "creatorId" = :creatorId', {
+          id,
+          creatorId: req.session.userId,
+        })
+        .returning('*')
+        .execute()
+        .then((res) => {
+          return res.raw[0];
+        });
     }
-    if (typeof title !== 'undefined') {
-      post.title = title;
-      await Post.update(id, { title });
-    }
-    return post;
+    return null;
   }
 
   @Mutation(() => Boolean)
