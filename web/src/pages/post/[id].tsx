@@ -3,6 +3,7 @@ import { withUrqlClient } from 'next-urql';
 import Layout from '../../components/Layout';
 import { createUrqlClient } from '../../utils/createUrqlClient';
 import { useGetPostFromUrl } from '../../utils/useGetPostFromUrl';
+import EditDeletePostButtons from '../../components/EditDeletePostButtons';
 
 const Post = () => {
   const [{ data, fetching }] = useGetPostFromUrl();
@@ -21,7 +22,13 @@ const Post = () => {
 
   return (
     <Layout>
-      <Heading>{data.post.title}</Heading>
+      <Flex justifyContent={'space-between'}>
+        <Heading>{data.post.title}</Heading>
+        <EditDeletePostButtons
+          postId={data.post.id}
+          creatorId={data.post.creator.id}
+        />
+      </Flex>
       <Text>{data.post.text}</Text>
     </Layout>
   );

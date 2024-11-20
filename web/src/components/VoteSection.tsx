@@ -37,8 +37,7 @@ export const VoteSection: React.FC<VoteSectionProps> = ({ post }) => {
       />
       <Flex
         fontSize={'xs'}
-        height={'40px'}
-        width={'40px'}
+        m={2}
         justifyContent={'center'}
         alignItems={'center'}
       >

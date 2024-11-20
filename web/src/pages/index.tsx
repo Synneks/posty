@@ -1,36 +1,20 @@
-import {
-  Box,
-  Button,
-  Flex,
-  Heading,
-  IconButton,
-  Stack,
-  Text,
-} from '@chakra-ui/react';
+import { Box, Button, Flex, Heading, Stack, Text } from '@chakra-ui/react';
 import { withUrqlClient } from 'next-urql';
 import { useState } from 'react';
+import EditDeletePostButtons from '../components/EditDeletePostButtons';
 import Layout from '../components/Layout';
 import { VoteSection } from '../components/VoteSection';
-import {
-  useDeletePostMutation,
-  useMeQuery,
-  usePostsQuery,
-} from '../generated/graphql';
+import { usePostsQuery } from '../generated/graphql';
 import { createUrqlClient } from '../utils/createUrqlClient';
-import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
-import NextLink from 'next/link';
 
 const Index = () => {
   const [variables, setVariables] = useState({
     limit: 15,
     cursor: null as null | string,
   });
-  const [{ data: meData }] = useMeQuery();
   const [{ data: postsData, fetching }] = usePostsQuery({
     variables,
   });
-
-  const [, deletePost] = useDeletePostMutation();
 
   if (!fetching && !postsData) {
     return <div>Error when loading data</div>;
@@ -70,27 +54,12 @@ const Index = () => {
                           {p.textSnippet}
                           {p.textSnippet.length === 128 ? <>...</> : null}
                         </Text>
-                        {meData?.me?.id !== p.creatorId ? null : (
-                          <Flex mt={'auto'} flexWrap={'nowrap'}>
-                            <IconButton
-                              aria-label="Edit Post"
-                              variant={'ghost'}
-                              icon={<EditIcon />}
-                              as={NextLink}
-                              href={`/post/edit/${p.id}`}
-                            ></IconButton>
-                            <IconButton
-                              aria-label="Delete Post"
-                              variant={'ghost'}
-                              icon={<DeleteIcon />}
-                              onClick={() => {
-                                deletePost({ id: p.id });
-                              }}
-                            ></IconButton>
-                          </Flex>
-                        )}
                       </Flex>
                     </Box>
+                    <EditDeletePostButtons
+                      postId={p.id}
+                      creatorId={p.creatorId}
+                    />
                   </Flex>
                 )
               )}
