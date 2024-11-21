@@ -9,6 +9,7 @@ import { COOKIE_NAME, __prod__ } from './constants';
 import { PostgresDataSource } from './datasource';
 import { createRedisStore } from './redis';
 import { MyContext } from './types';
+import { createUpdootLoader } from './utils/createUpdootLoader';
 import { createUserLoader } from './utils/createUserLoader';
 
 const main = async () => {
@@ -56,6 +57,7 @@ const main = async () => {
         res,
         redis,
         userLoader: createUserLoader(),
+        updootLoader: createUpdootLoader(),
       }),
     })
   );

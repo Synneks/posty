@@ -50,6 +50,21 @@ export class PostResolver {
     return userLoader.load(thisPost.creatorId);
   }
 
+  @FieldResolver(() => Int, { nullable: true })
+  async voteStatus(
+    @Root() thisPost: Post,
+    @Ctx() { req, updootLoader }: MyContext
+  ) {
+    if (!req.session.userId) {
+      return null;
+    }
+    const updoot = await updootLoader.load({
+      postId: thisPost.id,
+      userId: Number(req.session.userId),
+    });
+    return updoot ? updoot.value : null;
+  }
+
   @Mutation(() => Boolean)
   @UseMiddleware(isAuth)
   async vote(
@@ -102,19 +117,12 @@ export class PostResolver {
     @Arg('cursor', () => String, { nullable: true }) cursor: string | null,
     @Ctx() { req }: MyContext
   ): Promise<PaginatedPosts> {
-    console.log(req.session);
-    const { userId } = req.session;
     const realLimit = await Math.min(50, limit);
     const realLimitPlusOne = realLimit + 1;
 
     const posts = await PostgresDataSource.query(
       `
-        SELECT p.*, 
-        ${
-          userId
-            ? '(select value from updoot where "userId" = $3 and "postId" = p.id) "voteStatus"'
-            : '$3 as "voteStatus"'
-        }
+        SELECT p.*
         FROM post p
         WHERE p."createdAt" < $1
         ORDER BY p."createdAt" DESC
@@ -125,7 +133,6 @@ export class PostResolver {
           ? new Date(parseInt(req.session.cursor))
           : new Date(),
         realLimitPlusOne,
-        req.session.userId,
       ]
     );
 
