@@ -3,10 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { useLogoutMutation, useMeQuery } from '../generated/graphql';
 import { isServer } from '../utils/isServer';
 import NextLink from 'next/link';
+import { useRouter } from 'next/router';
 
 interface NavBarProps {}
 
 export const NavBar: React.FC<NavBarProps> = () => {
+  const router = useRouter();
   const [{ fetching: logoutFetching }, logout] = useLogoutMutation();
   const [{ data, fetching }] = useMeQuery({
     // fully optional since I am sending the cookie with the request the navbar can be rendered on the server, but I prefer not to
@@ -40,15 +42,16 @@ export const NavBar: React.FC<NavBarProps> = () => {
       <Flex alignItems={'center'} justifyContent={'space-around'} gap={4}>
         <Link>
           <Button as={NextLink} href={'/create-post'}>
-            Create Post{' '}
+            Create Post
           </Button>
         </Link>
 
         <Box mr={2}> {data.me.username}</Box>
         <Button
           variant={'link'}
-          onClick={() => {
-            logout({});
+          onClick={async () => {
+            await logout({});
+            router.reload();
           }}
           isLoading={logoutFetching}
         >
