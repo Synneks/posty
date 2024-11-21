@@ -14,9 +14,10 @@ import {
 } from 'type-graphql';
 import { PostgresDataSource } from '../datasource';
 import { Post } from '../entities/Post';
+import { Updoot } from '../entities/Updoot';
+import { User } from '../entities/User';
 import { isAuth } from '../middleware/isAuth';
 import { MyContext } from '../types';
-import { Updoot } from '../entities/Updoot';
 
 @InputType()
 class PostInput {
@@ -40,6 +41,13 @@ export class PostResolver {
   @FieldResolver(() => String)
   textSnippet(@Root() thisPost: Post) {
     return thisPost.text.slice(0, 128);
+  }
+
+  @FieldResolver(() => User)
+  creator(@Root() thisPost: Post, @Ctx() { userLoader }: MyContext) {
+    // without data loader
+    // return User.findOne({ where: { id: thisPost.creatorId } });
+    return userLoader.load(thisPost.creatorId);
   }
 
   @Mutation(() => Boolean)
@@ -102,20 +110,12 @@ export class PostResolver {
     const posts = await PostgresDataSource.query(
       `
         SELECT p.*, 
-        json_build_object(
-          'id', u.id, 
-          'username', u.username, 
-          'email', u.email,
-          'createdAt', u."createdAt",
-          'updatedAt', u."updatedAt"
-        ) "creator",
         ${
           userId
             ? '(select value from updoot where "userId" = $3 and "postId" = p.id) "voteStatus"'
             : '$3 as "voteStatus"'
         }
         FROM post p
-        INNER JOIN "user" u ON u.id = p."creatorId"
         WHERE p."createdAt" < $1
         ORDER BY p."createdAt" DESC
         LIMIT $2
@@ -137,7 +137,7 @@ export class PostResolver {
 
   @Query(() => Post, { nullable: true })
   post(@Arg('id', () => Int) id: number): Promise<Post | null> {
-    return Post.findOne({ where: { id }, relations: ['creator'] });
+    return Post.findOne({ where: { id } });
   }
 
   @Mutation(() => Post)

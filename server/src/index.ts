@@ -9,6 +9,7 @@ import { COOKIE_NAME, __prod__ } from './constants';
 import { PostgresDataSource } from './datasource';
 import { createRedisStore } from './redis';
 import { MyContext } from './types';
+import { createUserLoader } from './utils/createUserLoader';
 
 const main = async () => {
   await initDB();
@@ -51,9 +52,10 @@ const main = async () => {
     // would set allow requests only on this endpoint
     expressMiddleware(apolloServer, {
       context: async ({ req, res }): Promise<MyContext> => ({
-        redis,
         req,
         res,
+        redis,
+        userLoader: createUserLoader(),
       }),
     })
   );
