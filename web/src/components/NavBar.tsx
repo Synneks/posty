@@ -75,7 +75,7 @@ export const NavBar: React.FC<NavBarProps> = () => {
       <Link as={NextLink} href="/">
         <Heading>
           <Highlight query={'Clone'} styles={{ color: 'background' }}>
-            Reddit Clone
+            Posty App
           </Highlight>
         </Heading>
       </Link>

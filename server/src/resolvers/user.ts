@@ -122,6 +122,7 @@ export class UserResolver {
       1000 * 60 * 60 * 24 * 3 // 3 days
     );
 
+    // left as localhost because don't want to set up a mail provider for production
     sendMail(
       email,
       `<a href="http://localhost:3000/change-password/${token}">reset password</a>`

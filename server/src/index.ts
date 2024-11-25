@@ -1,3 +1,4 @@
+import 'dotenv-safe/config';
 import { expressMiddleware } from '@apollo/server/express4';
 import cors from 'cors';
 import express from 'express';
@@ -13,20 +14,22 @@ import { createUpdootLoader } from './utils/createUpdootLoader';
 import { createUserLoader } from './utils/createUserLoader';
 
 const main = async () => {
+  console.log(process.env);
   await initDB();
 
   const app = express();
   const apolloServer = await createApolloServer();
-  const redisStore = await createRedisStore();
-  const redis = new Redis();
+  const { redisStore, redis } = await setUpRedi();
 
   // Start the server.
-  app.listen(4000, () => {
-    console.log(`🚀 Server ready at http://localhost:4000/graphql`);
+  app.listen(process.env.PORT, () => {
+    console.log(`🚀 Server ready at port ${process.env.PORT}`);
   });
 
+  app.set('trust proxy', 1);
+
   // Set up express middleware for CORS as PostgresDataSource .
-  app.use(cors({ origin: 'http://localhost:3000', credentials: true })); // set middleware to allow requests from the frontend on all routes
+  app.use(cors({ origin: process.env.CORS_ORIGIN, credentials: true })); // set middleware to allow requests from the frontend on all routes
 
   // Initialize session storage.
   app.use(
@@ -35,7 +38,7 @@ const main = async () => {
       store: redisStore,
       resave: false, // required: force lightweight session keep alive (touch)
       saveUninitialized: false, // recommended: only save session when data exists
-      secret: 'keyboard cat',
+      secret: process.env.SESSION_SECRET,
       cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
         httpOnly: true, // cookie only accessible by the web server (not JavaScript)
@@ -61,6 +64,21 @@ const main = async () => {
       }),
     })
   );
+};
+
+const setUpRedi = async () => {
+  const redisStore = await createRedisStore();
+  const redis = new Redis(process.env.REDIS_URL);
+
+  redis.on('connect', () => {
+    console.log('Redis connected');
+  });
+
+  redis.on('error', (err) => {
+    console.error('Redis error: ', err);
+  });
+
+  return { redisStore, redis };
 };
 
 const initDB = async () => {
